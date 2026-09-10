@@ -1,30 +1,51 @@
-# TBED-CS779-IITK
-Text Based Emotion Detection SemEval-2025 Task 11
+# Text-Based Emotion Detection — SemEval-2025 Task 11
 
-# Results for Track A, B, and C
+Multilabel emotion classification for the English dataset, **SemEval-2025 Task 11 (Track A)**.
 
-| **Model Name**                                                                 | **Track** | **Accuracy** | **Micro F1** | **Macro F1** | **Weighted F1** |
-|-------------------------------------------------------------------------------|-----------|--------------|--------------|--------------|-----------------|
-| SamLowe/roberta-base-go_emotions                                              | A         | 0.21         | 0.45         | 0.44         | 0.42            |
-| cardiffnlp/twitter-roberta-large-emotion-latest                               | A         | 0.29         | 0.54         | 0.53         | 0.50            |
-| Emanuel/twitter-emotion-deberta-v3-base                                       | A         | 0.16         | 0.45         | 0.40         | 0.45            |
-| meta-llama/Meta-Llama-3-8B-Instruct                                           | A         | 0.24         | 0.58         | 0.59         | 0.58            |
-| cardiffnlp/twitter-roberta-large-emotion-latest (Full Fine-tuning)            | A         | 0.43         | 0.60         | 0.49         | -               |
-| SamLowe/roberta-base-go_emotions (Full Fine-tuning)                           | A         | 0.44         | 0.61         | 0.49         | -               |
-| cardiffnlp/twitter-roberta-large-emotion-latest (Added Classifier Layer Only) | A         | 0.57         | 0.73         | 0.69         | -               |
-| cardiffnlp/twitter-roberta-large-emotion-latest (Added FC Layer + Classifier) | A         | 0.62         | 0.77         | 0.75         | -               |
-| cardiffnlp/twitter-roberta-large-emotion-latest (Entailment Approach)         | A         | 0.60         | 0.73         | 0.73         | -               |
-| cardiffnlp/twitter-roberta-large-emotion-latest (Oversampling Method-1)       | A         | 0.59         | 0.73         | 0.73         | -               |
-| cardiffnlp/twitter-roberta-large-emotion-latest (Oversampling Method-2)       | A         | **0.64**     | **0.78**     | **0.77**     | -               |
-| **After Data Augmentation**                                                   |           |              |              |              |                 |
-| SamLowe/roberta-base-go_emotions                                              | A         | 0.40         | 0.59         | 0.48         | 0.55            |
-| cardiffnlp/twitter-roberta-large-emotion-latest                               | A         | 0.61         | 0.76         | 0.74         | 0.72            |
-| Emanuel/twitter-emotion-deberta-v3-base                                       | A         | 0.24         | 0.49         | 0.44         | 0.45            |
-| cardiffnlp/twitter-xlm-roberta-base-sentiment                                 | C         | **0.10**     | **0.17**     | **0.13**     | **0.15**        |
+📄 **Published in the ACL Anthology** — [2025.semeval-1.243](https://aclanthology.org/2025.semeval-1.243/)
 
-# Results for Track B
+## Result
 
-| **Model Name**                  | **Anger (Pear R.)** | **Fear (Pear R.)** | **Joy (Pear R.)** | **Sadness (Pear R.)** | **Surprise (Pear R.)** | **Average Pearson r** |
-|---------------------------------|---------------------|--------------------|-------------------|-----------------------|------------------------|-----------------------|
-| cardiffnlp/twitter-roberta-large-emotion-latest (with added FC layer) | 0.80               | 0.42              | 0.72              | 0.59                 | 0.52                 |  0.61                     |
+**Macro-F1 0.7344** on the test set, from a fully fine-tuned transformer ensemble.
 
+## What was tried
+
+The interesting part of this work is the comparison, not just the final number. Three
+fine-tuning strategies were implemented and evaluated against each other:
+
+| Strategy | Idea | Outcome |
+|---|---|---|
+| **Full fine-tuning + classification head** | Update all encoder weights, add a multilabel head | **Best** — used in the final ensemble |
+| **Adapter models** | Freeze the encoder, train small inserted modules | Cheaper, did not match full fine-tuning here |
+| **Entailment-based reformulation** | Recast "does this text express anger?" as an NLI entailment problem | Promising framing; underperformed the direct approach on this dataset |
+
+The final system is an **ensemble of transformer models** with additional classification layers,
+which outperformed every individual configuration.
+
+## Why multilabel matters here
+
+Emotion detection isn't single-label — a sentence can carry anger *and* fear *and* sadness at
+once. That rules out plain softmax classification and changes both the loss (per-label binary
+cross-entropy rather than categorical) and the evaluation (macro-F1 across labels, so rare
+emotions count as much as common ones and can't be ignored by a majority-class shortcut).
+
+## Stack
+
+PyTorch · HuggingFace Transformers · multilabel classification heads · model ensembling
+
+## Citation
+
+```bibtex
+@inproceedings{pathak-2025-semeval,
+    title = "Text-Based Emotion Detection",
+    author = "Pathak, Suyamoon and others",
+    booktitle = "Proceedings of the 19th International Workshop on Semantic Evaluation (SemEval-2025)",
+    year = "2025",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2025.semeval-1.243/",
+}
+```
+
+---
+
+Work done at **IIT Kanpur** with Dr. Ashutosh Modi.
